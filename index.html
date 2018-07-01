@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Smart Garden administrative webpage">
+    <meta name="author" content="Mirco Civolani, Pietro Battilana">
+
+    <title>SmartGarden</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <style>
+        body {
+            padding-top: 54px;
+        }
+
+        @media (min-width: 992px) {
+            body {
+                padding-top: 56px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="jumbotron">
+            <h1>SmartGarden administration</h1>
+            <p>Switch on/off the irrigation or manage your week irrigation schedule</p>
+        </div>
+
+        <h3 id='status'>Status: </h3>
+        <button id="off" type="button" class="btn btn-danger btn-lg" onclick="off()">Off</button>
+
+        <div id='ons' class="btn-group">
+            <button type="button" class="btn btn-primary" onclick="on(1)">1 minute</button>
+            <button type="button" class="btn btn-primary" onclick="on(5)">5 minutes</button>
+            <button type="button" class="btn btn-primary" onclick="on(10)">10 minutes</button>
+            <button type="button" class="btn btn-primary" onclick="on(15)">15 minutes</button>
+            <button type="button" class="btn btn-primary" onclick="on(20)">20 minutes</button>
+            <button type="button" class="btn btn-primary" onclick="on(25)">25 minutes</button>
+        </div>
+        
+        
+
+        <br>
+        <br>
+        <h3>Scheduling</h3>
+        <div class="well">
+            <form onsubmit="changeTime()">
+                Start-time
+                <input type="time" id="start-time">
+                </p>
+                Duration
+                <input type="number" id="duration" min="1" max="45"> minutes
+                <br>
+                <br>
+                <input type="submit">
+            </form>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Status</th>
+                    <th>Toggle</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Monday</td>
+                    <td id="monday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(0)">Change</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Tuesday</td>
+                    <td id="tuesday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(1)">Change</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Wednesday</td>
+                    <td id="wednesday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(2)">Change</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Thursday</td>
+                    <td id="thursday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(3)">Change</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Friday</td>
+                    <td id="friday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(4)">Change</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Saturday</td>
+                    <td id="saturday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(5)">Change</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Sunday</td>
+                    <td id="sunday"></td>
+                    <td>
+                        <button type="button" class="btn-sm" onclick="toggle(6)">Change</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script> 
+
+        var conf = {"active":false,"week":{"duration":"1","days":[true,true,true,true,true,true,true],"time":"14:48"}}
+        // getSettings();
+        updateSettingsUI();
+
+        function updateSettingsUI() {
+            if (conf.active) {
+                $("#off").removeAttr('disabled');
+                $("#ons button").attr("disabled", "disabled").css('cursor', 'default');
+
+            } else {
+                $("#ons button").removeAttr("disabled", "disabled");
+                $("#off").attr("disabled", "disabled").css('cursor', 'default');
+            }
+
+            $("#start-time").val(conf.week.time);
+            $("#duration").val(conf.week.duration);
+            $("#monday").html(conf.week.days[0] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#tuesday").html(conf.week.days[1] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#wednesday").html(conf.week.days[2] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#thursday").html(conf.week.days[3] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#friday").html(conf.week.days[4] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#saturday").html(conf.week.days[5] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#sunday").html(conf.week.days[6] ? '<p class="bg-success"> Enabled </p>' : '<p class="bg-danger"> Disabled </p>');
+            $("#status").text(conf.active === true ? 'Status: Active' : 'Status: Turned off');
+        }
+
+        function toggle(index) {
+            conf.week.days[index] = !conf.week.days[index];
+
+            postSettings();
+            updateSettingsUI();
+        }
+
+        function on(minutes) {
+            conf.active = true
+
+            fetch('http://192.168.43.51:1880/on?minutes=' + minutes)
+            .then()
+
+            updateSettingsUI()
+        }
+
+        function off() {
+            conf.active = false
+            
+            fetch('http://192.168.43.51:1880/off')
+                .then()
+
+            updateSettingsUI()
+        }
+
+        function changeTime() {
+            conf.week.time = $("#start-time").val();
+            conf.week.duration = $("#duration").val();
+            postSettings();
+        }
+
+        function getSettings() {
+            fetch('http://192.168.43.51:1880/config')
+            .then(response => {
+                return response.text()
+            }).then(text => {
+                conf = JSON.parse(text)
+                updateSettingsUI();
+                setTimeout(() => {
+                    getSettings()
+                }, 5000);
+            }).catch(err => {
+                setTimeout(() => {
+                    getSettings()
+                }, 5000);
+            })
+        }
+
+        function postSettings() {
+            fetch('http://192.168.43.51:1880/config', {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'Application/JSON'
+                },
+                body: JSON.stringify(conf)
+            })
+            .then()
+        }
+
+    </script>
+
+</body>
+
+</html>
